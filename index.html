@@ -20,7 +20,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .pill{border:1px solid var(--border);padding:6px 10px;border-radius:12px;font-weight:700;font-size:14px;background:#fff;cursor:pointer}
 .pill:hover{background:#f8fafc}
-.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.hint{font-size:12px;color:#muted;margin-top:6px}
 .footer{margin-top:16px;color:#555;font-size:12px;text-align:center}
 .banner{margin:8px 0;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;display:none}
 </style>
@@ -35,16 +35,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
 <script>
 const lots=[{id:"lot1",name:"Lot 1"},{id:"lot3",name:"Lot 3"},{id:"lot4",name:"Lot 4"},{id:"stadium",name:"Stadium Lot"},{id:"commons-garage",name:"Commons Drive Garage"},{id:"lot25",name:"Lot 25"},{id:"lot31",name:"Lot 31"},{id:"lot29",name:"Lot 29"},{id:"lot22",name:"Lot 22"}]
 const ENDPOINT="https://api.npoint.io/9b7a2cce7a36d16b4bfe"
-const API_KEY=""  // if you create one in npoint, paste it here
+const API_KEY=""
 const L=document.getElementById("lots")
 const B=document.getElementById("banner")
-
 function badgeClass(s){if(s==="Easy")return"badge status-easy";if(s==="Getting Full")return"badge status-busy";if(s==="Packed")return"badge status-packed";return"badge"}
 function now(){return Date.now()}
 function minutes(ms){return Math.floor((Date.now()-ms)/60000)}
 function showMsg(txt){B.textContent=txt;B.style.display="block"}
 function hideMsg(){B.style.display="none"}
-
 function render(data){
   L.innerHTML="";
   lots.forEach(l=>{
@@ -73,7 +71,6 @@ function render(data){
     L.appendChild(card);
   });
 }
-
 async function getData(){
   try{
     const res=await fetch(ENDPOINT,{cache:"no-store"});
@@ -86,24 +83,22 @@ async function getData(){
     return {};
   }
 }
-
 async function putData(data){
   try{
     const headers={"Content-Type":"application/json"};
     if(API_KEY) headers["X-Api-Key"]=API_KEY;
     const res=await fetch(ENDPOINT,{method:"PUT",headers,body:JSON.stringify(data)});
-    if(!res.ok){showMsg("Writes blocked ("+res.status+"). Add your npoint API key.");}
+    if(!res.ok){showMsg("Writes blocked ("+res.status+").")}
   }catch(e){
-    showMsg("Network error saving. Change won’t sync.");
+    showMsg("Network error saving");
   }
 }
-
 let model={}
-async function refresh(){ model=await getData(); render(model) }
-async function submit(id,status){ model[id]={status,ts:now()}; render(model); await putData(model) }
-
-refresh();
-setInterval(refresh,8000);
+render(model)
+async function refresh(){model=await getData();render(model)}
+async function submit(id,status){model[id]={status,ts:now()};render(model);await putData(model)}
+refresh()
+setInterval(refresh,8000)
 </script>
 </body>
 </html>
