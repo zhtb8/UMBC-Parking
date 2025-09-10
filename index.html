@@ -37,14 +37,14 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui
 <script>
 const lots=[{id:"lot1",name:"Lot 1"},{id:"lot3",name:"Lot 3"},{id:"lot4",name:"Lot 4"},{id:"stadium",name:"Stadium Lot"},{id:"commons-garage",name:"Commons Drive Garage"},{id:"lot25",name:"Lot 25"},{id:"lot31",name:"Lot 31"},{id:"lot29",name:"Lot 29"},{id:"lot22",name:"Lot 22"}]
 const ENDPOINT="https://api.npoint.io/9b7a2cce7a36d16b4bfe"
-const L=document.getElementById('lots')
-const B=document.getElementById('banner')
+const L=document.getElementById("lots")
+const B=document.getElementById("banner")
 function badgeClass(s){if(s==="Easy")return"badge status-easy";if(s==="Getting Full")return"badge status-busy";if(s==="Packed")return"badge status-packed";return"badge"}
 function now(){return Date.now()}
 function minutes(ms){return Math.floor((Date.now()-ms)/60000)}
-function render(data){L.innerHTML="";lots.forEach(l=>{const r=data[l.id]||{};const card=document.createElement('div');card.className='card';const title=document.createElement('div');title.innerHTML=`<strong>${l.name}</strong> ${r.status?`<span class="${badgeClass(r.status)}">${r.status}</span>`:""}`;const actions=document.createElement('div');actions.className='actions';['Easy','Getting Full','Packed'].forEach(s=>{const b=document.createElement('button');b.className='pill';b.textContent=s;b.onclick=()=>submit(l.id,s);actions.appendChild(b)});card.appendChild(title);card.appendChild(actions);if(r.ts){const hint=document.createElement('div');hint.className='hint';hint.textContent=`Last updated ${minutes(r.ts)}m ago`;card.appendChild(hint)}L.appendChild(card)})}
-async function getData(){try{const res=await fetch(ENDPOINT,{cache:'no-store'});if(!res.ok)return{};return await res.json()}catch(e){B.style.display='block';B.textContent='Error loading data';return{}}}
-async function putData(data){try{await fetch(ENDPOINT,{method:'PUT',headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})}catch(e){console.error(e)}}
+function render(data){L.innerHTML="";lots.forEach(l=>{const r=data[l.id]||{};const card=document.createElement("div");card.className="card";const title=document.createElement("div");title.innerHTML=`<strong>${l.name}</strong> ${r.status?`<span class="${badgeClass(r.status)}">${r.status}</span>`:""}`;const actions=document.createElement("div");actions.className="actions";["Easy","Getting Full","Packed"].forEach(s=>{const b=document.createElement("button");b.className="pill";b.textContent=s;b.onclick=()=>submit(l.id,s);actions.appendChild(b)});card.appendChild(title);card.appendChild(actions);if(r.ts){const hint=document.createElement("div");hint.className="hint";hint.textContent=`Last updated ${minutes(r.ts)}m ago`;card.appendChild(hint)}L.appendChild(card)})}
+async function getData(){try{const res=await fetch(ENDPOINT,{cache:"no-store"});if(!res.ok)return{};return await res.json()}catch(e){B.style.display="block";B.textContent="Error loading data";return{}}}
+async function putData(data){try{await fetch(ENDPOINT,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})}catch(e){}}
 let model={}
 async function refresh(){model=await getData();render(model)}
 async function submit(id,status){const ts=now();model[id]={status,ts};render(model);await putData(model)}
