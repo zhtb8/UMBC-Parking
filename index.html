@@ -1,167 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>UMBC Parking Live</title>
-<link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f7fb;--card:#fff;--text:#111;--muted:#666;--border:#e5e7eb}
+:root{--bg:#f7f7fb;--card:#fff;--text:#111;--muted:#666;--border:#e5e7eb;--easy:#e8f7ee;--busy:#fff7db;--packed:#fde7e7}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-.wrap{max-width:1120px;margin:0 auto;padding:24px}
-.header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.wrap{max-width:800px;margin:0 auto;padding:20px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .h1{font-size:22px;font-weight:700}
-.btn{border:1px solid var(--border);background:#fff;padding:8px 14px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer}
-.btn.active{background:#000;color:#fff}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
-.grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
-@media(min-width:1024px){.grid{grid-template-columns:1fr 1fr}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.badge{display:inline-flex;align-items:center;border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
-.status-easy{background:#e8f7ee;color:#0f7a39;border-color:#bfe7cc}
-.status-busy{background:#fff7db;color:#8a6a00;border-color:#f3e2a0}
-.status-packed{background:#fde7e7;color:#8a1c1c;border-color:#f6bcbc}
-.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.stat{display:flex;flex-direction:column}
-.stat .k{font-size:12px;color:var(--muted)}
-.stat .v{font-size:14px;font-weight:700}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.pill{border:1px solid var(--border);padding:8px 12px;border-radius:12px;font-weight:600;font-size:14px;background:#fff;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.badge{display:inline-flex;align-items:center;border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-left:8px}
+.status-easy{background:var(--easy);color:#0f7a39;border-color:#bfe7cc}
+.status-busy{background:var(--busy);color:#8a6a00;border-color:#f3e2a0}
+.status-packed{background:var(--packed);color:#8a1c1c;border-color:#f6bcbc}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pill{border:1px solid var(--border);padding:6px 10px;border-radius:12px;font-weight:700;font-size:14px;background:#fff;cursor:pointer}
 .pill:hover{background:#f8fafc}
-.pill:disabled{opacity:.5;cursor:not-allowed}
-.input{flex:1;border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 12px;font-size:14px}
-.hint{font-size:12px;color:var(--muted)}
-.map{width:100%;height:70vh;border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.footer{margin-top:16px;color:#555;font-size:12px}
-.link{color:#2563eb;text-decoration:none}
-.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.pdf{width:100%;height:70vh;border:1px solid var(--border);border-radius:16px;overflow:hidden}
-textarea{width:100%;height:160px;border:1px solid var(--border);border-radius:12px;padding:10px}
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.footer{margin-top:16px;color:#555;font-size:12px;text-align:center}
+.banner{margin:8px 0;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px}
+.input{flex:1;border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 10px;font-size:14px}
+.searchbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="header">
     <div class="h1">UMBC Parking Live</div>
-    <div class="controls">
-      <button id="commuterBtn" class="btn active">Commuter</button>
-      <button id="visitorBtn" class="btn">Visitor</button>
-      <button id="exportBtn" class="btn">Export Lots</button>
-      <button id="importBtn" class="btn">Import Lots</button>
+    <div style="display:flex;gap:8px">
+      <input id="endpoint" class="input" placeholder="npoint endpoint URL">
+      <input id="apikey" class="input" placeholder="npoint API key (optional)">
     </div>
   </div>
-  <div class="tabbar">
-    <button id="liveTab" class="btn active">Live Map</button>
-    <button id="officialTab" class="btn">Official Map (PDF)</button>
-  </div>
-  <div id="livePane" class="grid">
-    <div class="card">
-      <div class="row" style="margin-bottom:10px">
-        <input id="search" class="input" placeholder="Search lots…">
-        <div class="hint">Reports decay after <span id="decayM"></span>m</div>
-      </div>
-      <div id="suggestWrap"></div>
-      <div id="list" class="grid" style="grid-template-columns:1fr"></div>
-      <div class="tools">
-        <textarea id="jsonBox" placeholder='Paste lots JSON here for import, or copy after export'></textarea>
-      </div>
-    </div>
-    <div class="map" id="map"></div>
-  </div>
-  <div id="pdfPane" style="display:none">
-    <div class="pdf">
-      <iframe src="UMBC-Parking-Map-2024-2025.pdf#view=FitH" title="UMBC Official Parking Map" style="width:100%;height:100%;border:0"></iframe>
-    </div>
-    <div class="hint" style="margin-top:8px">If the PDF doesn't appear here in preview, it will render when this HTML is hosted in the same folder as the PDF.</div>
-  </div>
-  <div class="footer">
-    <div>Not affiliated with UMBC Parking Services. Do not interact while driving.</div>
-    <div class="hint">Visitor pay-to-park and zones align to the official 2024–25 UMBC Parking Map.</div>
-  </div>
+  <div id="banner" class="banner" style="display:none"></div>
+  <div id="lots"></div>
+  <div class="footer">Not affiliated with UMBC Parking Services. Do not interact while driving.</div>
 </div>
-<script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
 <script>
-const DECAY_MINUTES=30
-const RATELIMIT_MINUTES=5
-const ENFORCEMENT_MSG="Visitor parking $2/hr, enforced Mon–Fri 8:00a–4:00p"
-const VISITOR="visitor"
-const PERMIT="permit"
-const START_CENTER=[-76.7119,39.2548]
-const START_ZOOM=15.3
-const initialLots=[
-  {id:"commons-garage-l1",name:"Commons Drive Garage – L1",type:VISITOR,pay:true,zone:"P",coord:[-76.7117,39.2546]},
-  {id:"admin-garage-upper",name:"Administration Dr Garage – Upper",type:VISITOR,pay:true,zone:"P",coord:[-76.7099,39.2558]},
-  {id:"walker-garage-upper",name:"Walker Avenue Garage – Upper",type:VISITOR,pay:true,zone:"P",coord:[-76.7142,39.2526]},
-  {id:"lot7",name:"Lot 7 (Walker Ave)",type:VISITOR,pay:true,zone:"P",coord:[-76.7152,39.2529]},
-  {id:"lot9",name:"Lot 9 (PAHB)",type:VISITOR,pay:true,zone:"P",coord:[-76.7125,39.2561]},
-  {id:"lot1",name:"Lot 1",type:PERMIT,zone:"A",coord:[-76.7171,39.2511]},
-  {id:"lot3",name:"Lot 3",type:PERMIT,zone:"A",coord:[-76.7163,39.2530]},
-  {id:"lot8",name:"Lot 8",type:PERMIT,zone:"A",coord:[-76.7168,39.2493]},
-  {id:"stadium",name:"Stadium Lot",type:PERMIT,zone:"A",coord:[-76.7058,39.2532]},
-  {id:"lot22",name:"Lot 22",type:PERMIT,zone:"A",coord:[-76.7186,39.2465]},
-  {id:"lot11",name:"Lot 11",type:PERMIT,zone:"A",coord:[-76.7097,39.2578]},
-  {id:"lot24",name:"Lot 24",type:PERMIT,zone:"A",coord:[-76.7014,39.2551]}
-]
-function nowMs(){return Date.now()}
-function minutesAgo(ms){return Math.floor((Date.now()-ms)/60000)}
-function decayWeight(ts){const m=minutesAgo(ts);const k=DECAY_MINUTES/Math.log(2);return Math.exp(-m/k)}
-function pickStatusFromScore(s){if(s>0.3)return"Easy";if(s<-0.3)return"Packed";return"Getting Full"}
-function levelToScore(l){if(l==="easy")return 1;if(l==="busy")return 0;return-1}
-function confidenceText(w){if(w>2)return"High";if(w>1)return"Medium";return"Low"}
-function badgeClass(label){if(label==="Easy")return"badge status-easy";if(label==="Packed")return"badge status-packed";return"badge status-busy"}
-function anonId(){const k="umbc-parking-anon";let v=localStorage.getItem(k);if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem(k,v)}return v}
-const uid=anonId()
-const reportKey="umbc-parking-reports"
-const lotsKey="umbc-parking-lots"
-let mode="commuter"
-let query=""
-let lots=JSON.parse(localStorage.getItem(lotsKey)||"null")||initialLots
-let reports=JSON.parse(localStorage.getItem(reportKey)||"{}")
-const commuterBtn=document.getElementById("commuterBtn")
-const visitorBtn=document.getElementById("visitorBtn")
-const exportBtn=document.getElementById("exportBtn")
-const importBtn=document.getElementById("importBtn")
-const listDiv=document.getElementById("list")
-const suggestWrap=document.getElementById("suggestWrap")
-const decayM=document.getElementById("decayM")
-const searchEl=document.getElementById("search")
-const jsonBox=document.getElementById("jsonBox")
-const liveTab=document.getElementById("liveTab")
-const officialTab=document.getElementById("officialTab")
-const livePane=document.getElementById("livePane")
-const pdfPane=document.getElementById("pdfPane")
-decayM.textContent=DECAY_MINUTES.toString()
-let selectedLotId=""
-const map=new maplibregl.Map({container:"map",style:"https://demotiles.maplibre.org/style.json",center:START_CENTER,zoom:START_ZOOM,attributionControl:true})
-map.addControl(new maplibregl.NavigationControl())
-const markers={}
-function saveReports(){localStorage.setItem(reportKey,JSON.stringify(reports))}
-function saveLots(){localStorage.setItem(lotsKey,JSON.stringify(lots))}
-function prune(){const next={};Object.entries(reports).forEach(([lotId,arr])=>{const kept=arr.filter(r=>minutesAgo(r.ts)<=DECAY_MINUTES);if(kept.length)next[lotId]=kept});reports=next;saveReports()}
-setInterval(prune,30000)
-function aggregate(arr){if(!arr||!arr.length)return{status:"Unknown",totalW:0,lastTs:0,score:0};let sw=0,wsum=0,lastTs=0;arr.forEach(r=>{const w=decayWeight(r.ts);wsum+=w;sw+=w*levelToScore(r.level);if(r.ts>lastTs)lastTs=r.ts});const score=wsum?sw/wsum:0;return{status:pickStatusFromScore(score),totalW:wsum,lastTs,score}}
-function renderMarker(lot){if(markers[lot.id])markers[lot.id].remove();const el=document.createElement("div");el.className=lot.pay?"badge status-easy":"badge status-busy";el.style.cursor="pointer";el.textContent=lot.zone?lot.name+" · "+lot.zone:lot.name;const marker=new maplibregl.Marker({element:el,draggable:false}).setLngLat(lot.coord).addTo(map);el.addEventListener("click",()=>{selectedLotId=lot.id;map.flyTo({center:lot.coord,zoom:17,essential:true});});marker.on("dragend",()=>{const ll=marker.getLngLat();lot.coord=[ll.lng,ll.lat];saveLots();});markers[lot.id]=marker}
-function renderMap(){lots.forEach(renderMarker)}
-function minutesStr(ts){return ts?minutesAgo(ts)+"m ago":"—"}
-function statusScoreNum(s){if(s==="Easy")return 2;if(s==="Getting Full")return 1;if(s==="Packed")return 0;return-1}
-function filteredLots(){const q=query.trim().toLowerCase();return lots.filter(l=>mode==="visitor"?l.type===VISITOR:l.type!==VISITOR).filter(l=>q?l.name.toLowerCase().includes(q):true)}
-function sortByStatus(arr){return arr.sort((a,b)=>{const aa=aggregate(reports[a.id]||[]);const bb=aggregate(reports[b.id]||[]);const sa=statusScoreNum(aa.status);const sb=statusScoreNum(bb.status);if(sa!==sb)return sb-sa;return (bb.totalW||0)-(aa.totalW||0)})}
-function lotCard(l){const agg=aggregate(reports[l.id]||[]);const lastUser=(reports[l.id]||[]).find(r=>r.uid===uid);const can=!lastUser||minutesAgo(lastUser.ts)>=RATELIMIT_MINUTES;const wrap=document.createElement("div");wrap.className="card";const top=document.createElement("div");top.className="row";const left=document.createElement("div");const title=document.createElement("div");title.style.fontWeight="700";title.textContent=l.name;const meta=document.createElement("div");meta.className="meta";const status=document.createElement("span");status.className=badgeClass(agg.status);status.textContent=agg.status;const conf=document.createElement("span");conf.className="badge";conf.textContent=agg.totalW>0?("Confidence "+confidenceText(agg.totalW)):"No recent reports";const zone=document.createElement("span");if(l.zone){zone.className="badge";zone.textContent="Zone "+l.zone;meta.appendChild(zone)}meta.appendChild(status);meta.appendChild(conf);left.appendChild(title);left.appendChild(meta);const right=document.createElement("span");right.className="badge";right.textContent=l.pay?"Pay to Park":"Permit";top.appendChild(left);top.appendChild(right);const actions=document.createElement("div");actions.className="actions";const b1=document.createElement("button");b1.className="pill";b1.textContent="Easy";b1.disabled=!can;b1.onclick=()=>submit(l.id,"easy");const b2=document.createElement("button");b2.className="pill";b2.textContent="Getting Full";b2.disabled=!can;b2.onclick=()=>submit(l.id,"busy");const b3=document.createElement("button");b3.className="pill";b3.textContent="Packed";b3.disabled=!can;b3.onclick=()=>submit(l.id,"packed");const show=document.createElement("button");show.className="pill";show.textContent="Show on Map";show.onclick=()=>{selectedLotId=l.id;map.flyTo({center:l.coord,zoom:17,essential:true})};const pm=document.createElement("a");if(l.pay){pm.href="https://parkmobile.io";pm.target="_blank";pm.className="pill";pm.textContent="Open ParkMobile"}const tr=document.createElement("a");tr.href="https://transit.umbc.edu/";tr.target="_blank";tr.className="pill";tr.textContent="Transit";actions.appendChild(b1);actions.appendChild(b2);actions.appendChild(b3);actions.appendChild(show);if(l.pay)actions.appendChild(pm);actions.appendChild(tr);const stats=document.createElement("div");stats.className="row";const s1=document.createElement("div");s1.className="stat";const k1=document.createElement("div");k1.className="k";k1.textContent="Last report";const v1=document.createElement("div");v1.className="v";v1.textContent=minutesStr(agg.lastTs);s1.appendChild(k1);s1.appendChild(v1);const s2=document.createElement("div");s2.className="stat";const k2=document.createElement("div");k2.className="k";k2.textContent="Reports";const v2=document.createElement("div");v2.className="v";v2.textContent=agg.totalW?Math.max(1,Math.round(agg.totalW)).toString():"0";s2.appendChild(k2);s2.appendChild(v2);stats.appendChild(s1);stats.appendChild(s2);wrap.appendChild(top);wrap.appendChild(actions);wrap.appendChild(stats);if(l.pay){const note=document.createElement("div");note.className="hint";note.style.marginTop="6px";note.textContent=ENFORCEMENT_MSG;wrap.appendChild(note)}if(!can){const note2=document.createElement("div");note2.className="hint";note2.textContent="You can send another report in "+(RATELIMIT_MINUTES-minutesAgo(lastUser.ts))+"m";wrap.appendChild(note2)}return wrap}
-function submit(lotId,level){const arr=reports[lotId]||[];const mine=arr.find(r=>r.uid===uid);if(mine&&minutesAgo(mine.ts)<RATELIMIT_MINUTES)return;const ts=nowMs();const kept=arr.filter(r=>minutesAgo(r.ts)<=DECAY_MINUTES);reports[lotId]=[...kept,{uid:uid,level,ts}];saveReports();draw()}
-function draw(){prune();listDiv.innerHTML="";suggestWrap.innerHTML="";renderMap();const f=sortByStatus(filteredLots());if(f.length){const best=f[0];const sCard=lotCard(best);const label=document.createElement("div");label.className="hint";label.style.marginBottom="6px";label.textContent="Suggested";suggestWrap.appendChild(label);suggestWrap.appendChild(sCard)}f.slice(0).forEach(l=>{listDiv.appendChild(lotCard(l))})}
-commuterBtn.onclick=()=>{mode="commuter";commuterBtn.classList.add("active");visitorBtn.classList.remove("active");draw()}
-visitorBtn.onclick=()=>{mode="visitor";visitorBtn.classList.add("active");commuterBtn.classList.remove("active");draw()}
-);}
-lots=[...lots,lot];saveLots();renderMarker(lot);draw()}
-exportBtn.onclick=()=>{jsonBox.value=JSON.stringify(lots,null,2)}
-importBtn.onclick=()=>{try{const arr=JSON.parse(jsonBox.value);if(Array.isArray(arr)){lots=arr;saveLots();Object.values(markers).forEach(m=>m.remove());for(const l of lots)renderMarker(l);draw()}}catch(e){alert("Invalid JSON")}}
-searchEl.oninput=e=>{query=e.target.value;draw()}
-liveTab.onclick=()=>{liveTab.classList.add("active");officialTab.classList.remove("active");livePane.style.display="grid";pdfPane.style.display="none"}
-officialTab.onclick=()=>{officialTab.classList.add("active");liveTab.classList.remove("active");livePane.style.display="none";pdfPane.style.display="block"}
-draw()
+const lots=[{id:"lot1",name:"Lot 1"},{id:"lot3",name:"Lot 3"},{id:"lot4",name:"Lot 4"},{id:"stadium",name:"Stadium Lot"},{id:"commons-garage",name:"Commons Drive Garage"},{id:"lot25",name:"Lot 25"},{id:"lot31",name:"Lot 31"},{id:"lot29",name:"Lot 29"},{id:"lot22",name:"Lot 22"}]
+const E=document.getElementById('endpoint')
+const K=document.getElementById('apikey')
+const B=document.getElementById('banner')
+const L=document.getElementById('lots')
+const KEY_E="https://api.npoint.io/9b7a2cce7a36d16b4bfe"
+const KEY_K="umbc-npoint-key"
+E.value=localStorage.getItem(KEY_E)||""
+K.value=localStorage.getItem(KEY_K)||""
+function badgeClass(s){if(s==="Easy")return"badge status-easy";if(s==="Getting Full")return"badge status-busy";if(s==="Packed")return"badge status-packed";return"badge"}
+function now(){return Date.now()}
+function minutes(ms){return Math.floor((Date.now()-ms)/60000)}
+function render(data){L.innerHTML="";lots.forEach(l=>{const r=data[l.id]||{};const card=document.createElement('div');card.className='card';const title=document.createElement('div');title.innerHTML=`<strong>${l.name}</strong> ${r.status?`<span class="${badgeClass(r.status)}">${r.status}</span>`:""}`;const actions=document.createElement('div');actions.className='actions';['Easy','Getting Full','Packed'].forEach(s=>{const b=document.createElement('button');b.className='pill';b.textContent=s;b.onclick=()=>submit(l.id,s);actions.appendChild(b)});card.appendChild(title);card.appendChild(actions);if(r.ts){const hint=document.createElement('div');hint.className='hint';hint.textContent=`Last updated ${minutes(r.ts)}m ago`;card.appendChild(hint)}L.appendChild(card)})}
+async function getData(){const url=E.value.trim();if(!url){B.style.display='block';B.textContent='Enter your npoint endpoint URL to sync across users. Until then, this page will show defaults only.';return{}}B.style.display='none';const res=await fetch(url,{cache:'no-store'});if(!res.ok)return{};return await res.json()}
+async function putData(data){const url=E.value.trim();if(!url)return;const headers={"Content-Type":"application/json"};const key=K.value.trim();if(key)headers['X-Api-Key']=key;await fetch(url,{method:'PUT',headers,body:JSON.stringify(data)})}
+let model={}
+async function refresh(){try{model=await getData();render(model)}catch(e){render(model||{})}}
+async function submit(id,status){const ts=now();model[id]={status,ts};render(model);await putData(model)}
+E.onchange=()=>{localStorage.setItem(KEY_E,E.value.trim());refresh()}
+K.onchange=()=>{localStorage.setItem(KEY_K,K.value.trim())}
+refresh();setInterval(refresh,8000)
 </script>
 </body>
 </html>
