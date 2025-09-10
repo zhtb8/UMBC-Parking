@@ -50,7 +50,8 @@ textarea{width:100%;height:160px;border:1px solid var(--border);border-radius:12
       <button id="commuterBtn" class="btn active">Commuter</button>
       <button id="visitorBtn" class="btn">Visitor</button>
       <button id="exportBtn" class="btn">Export Lots</button>
-      </div>
+      <button id="importBtn" class="btn">Import Lots</button>
+    </div>
   </div>
   <div class="tabbar">
     <button id="liveTab" class="btn active">Live Map</button>
@@ -91,19 +92,18 @@ const PERMIT="permit"
 const START_CENTER=[-76.7119,39.2548]
 const START_ZOOM=15.3
 const initialLots=[
-  {id:"commons-drive-garage",name:"Commons Drive Garage",type:PERMIT,pay:false,zone:"A",coord:[-76.7117,39.2546]},
-  {id:"lot1",name:"Lot 1",type:PERMIT,pay:false,zone:"A",coord:[-76.7171,39.2511]},
-  {id:"lot3",name:"Lot 3",type:PERMIT,pay:false,zone:"A",coord:[-76.7163,39.2530]},
-  {id:"lot4",name:"Lot 4",type:PERMIT,pay:false,zone:"A",coord:[-76.7145,39.2538]},
-  {id:"stadium",name:"Stadium Lot",type:PERMIT,pay:false,zone:"A",coord:[-76.7058,39.2532]},
-  {id:"lot25",name:"Lot 25",type:PERMIT,pay:false,zone:"A",coord:[-76.7005,39.2543]},
-  {id:"lot31",name:"Lot 31",type:PERMIT,pay:false,zone:"A",coord:[-76.7195,39.2498]},
-  {id:"lot29",name:"Lot 29",type:PERMIT,pay:false,zone:"A",coord:[-76.7201,39.2515]},
-  {id:"lot22",name:"Lot 22",type:PERMIT,pay:false,zone:"A",coord:[-76.7186,39.2465]},
+  {id:"commons-garage-l1",name:"Commons Drive Garage – L1",type:VISITOR,pay:true,zone:"P",coord:[-76.7117,39.2546]},
   {id:"admin-garage-upper",name:"Administration Dr Garage – Upper",type:VISITOR,pay:true,zone:"P",coord:[-76.7099,39.2558]},
   {id:"walker-garage-upper",name:"Walker Avenue Garage – Upper",type:VISITOR,pay:true,zone:"P",coord:[-76.7142,39.2526]},
   {id:"lot7",name:"Lot 7 (Walker Ave)",type:VISITOR,pay:true,zone:"P",coord:[-76.7152,39.2529]},
-  {id:"lot9",name:"Lot 9 (PAHB)",type:VISITOR,pay:true,zone:"P",coord:[-76.7125,39.2561]}
+  {id:"lot9",name:"Lot 9 (PAHB)",type:VISITOR,pay:true,zone:"P",coord:[-76.7125,39.2561]},
+  {id:"lot1",name:"Lot 1",type:PERMIT,zone:"A",coord:[-76.7171,39.2511]},
+  {id:"lot3",name:"Lot 3",type:PERMIT,zone:"A",coord:[-76.7163,39.2530]},
+  {id:"lot8",name:"Lot 8",type:PERMIT,zone:"A",coord:[-76.7168,39.2493]},
+  {id:"stadium",name:"Stadium Lot",type:PERMIT,zone:"A",coord:[-76.7058,39.2532]},
+  {id:"lot22",name:"Lot 22",type:PERMIT,zone:"A",coord:[-76.7186,39.2465]},
+  {id:"lot11",name:"Lot 11",type:PERMIT,zone:"A",coord:[-76.7097,39.2578]},
+  {id:"lot24",name:"Lot 24",type:PERMIT,zone:"A",coord:[-76.7014,39.2551]}
 ]
 function nowMs(){return Date.now()}
 function minutesAgo(ms){return Math.floor((Date.now()-ms)/60000)}
@@ -117,14 +117,11 @@ const uid=anonId()
 const reportKey="umbc-parking-reports"
 const lotsKey="umbc-parking-lots"
 let mode="commuter"
-let editMode=false
 let query=""
 let lots=JSON.parse(localStorage.getItem(lotsKey)||"null")||initialLots
 let reports=JSON.parse(localStorage.getItem(reportKey)||"{}")
 const commuterBtn=document.getElementById("commuterBtn")
 const visitorBtn=document.getElementById("visitorBtn")
-const editBtn=document.getElementById("editBtn")
-const addLotBtn=document.getElementById("addLotBtn")
 const exportBtn=document.getElementById("exportBtn")
 const importBtn=document.getElementById("importBtn")
 const listDiv=document.getElementById("list")
@@ -146,7 +143,7 @@ function saveLots(){localStorage.setItem(lotsKey,JSON.stringify(lots))}
 function prune(){const next={};Object.entries(reports).forEach(([lotId,arr])=>{const kept=arr.filter(r=>minutesAgo(r.ts)<=DECAY_MINUTES);if(kept.length)next[lotId]=kept});reports=next;saveReports()}
 setInterval(prune,30000)
 function aggregate(arr){if(!arr||!arr.length)return{status:"Unknown",totalW:0,lastTs:0,score:0};let sw=0,wsum=0,lastTs=0;arr.forEach(r=>{const w=decayWeight(r.ts);wsum+=w;sw+=w*levelToScore(r.level);if(r.ts>lastTs)lastTs=r.ts});const score=wsum?sw/wsum:0;return{status:pickStatusFromScore(score),totalW:wsum,lastTs,score}}
-function renderMarker(lot){if(markers[lot.id])markers[lot.id].remove();const el=document.createElement("div");el.className=lot.pay?"badge status-easy":"badge status-busy";el.style.cursor="pointer";el.textContent=lot.zone?lot.name+" · "+lot.zone:lot.name;const marker=new maplibregl.Marker({element:el,draggable:editMode}).setLngLat(lot.coord).addTo(map);el.addEventListener("click",()=>{selectedLotId=lot.id;map.flyTo({center:lot.coord,zoom:17,essential:true});});marker.on("dragend",()=>{const ll=marker.getLngLat();lot.coord=[ll.lng,ll.lat];saveLots();});markers[lot.id]=marker}
+function renderMarker(lot){if(markers[lot.id])markers[lot.id].remove();const el=document.createElement("div");el.className=lot.pay?"badge status-easy":"badge status-busy";el.style.cursor="pointer";el.textContent=lot.zone?lot.name+" · "+lot.zone:lot.name;const marker=new maplibregl.Marker({element:el,draggable:false}).setLngLat(lot.coord).addTo(map);el.addEventListener("click",()=>{selectedLotId=lot.id;map.flyTo({center:lot.coord,zoom:17,essential:true});});marker.on("dragend",()=>{const ll=marker.getLngLat();lot.coord=[ll.lng,ll.lat];saveLots();});markers[lot.id]=marker}
 function renderMap(){lots.forEach(renderMarker)}
 function minutesStr(ts){return ts?minutesAgo(ts)+"m ago":"—"}
 function statusScoreNum(s){if(s==="Easy")return 2;if(s==="Getting Full")return 1;if(s==="Packed")return 0;return-1}
@@ -157,9 +154,10 @@ function submit(lotId,level){const arr=reports[lotId]||[];const mine=arr.find(r=
 function draw(){prune();listDiv.innerHTML="";suggestWrap.innerHTML="";renderMap();const f=sortByStatus(filteredLots());if(f.length){const best=f[0];const sCard=lotCard(best);const label=document.createElement("div");label.className="hint";label.style.marginBottom="6px";label.textContent="Suggested";suggestWrap.appendChild(label);suggestWrap.appendChild(sCard)}f.slice(0).forEach(l=>{listDiv.appendChild(lotCard(l))})}
 commuterBtn.onclick=()=>{mode="commuter";commuterBtn.classList.add("active");visitorBtn.classList.remove("active");draw()}
 visitorBtn.onclick=()=>{mode="visitor";visitorBtn.classList.add("active");commuterBtn.classList.remove("active");draw()}
+);}
 lots=[...lots,lot];saveLots();renderMarker(lot);draw()}
 exportBtn.onclick=()=>{jsonBox.value=JSON.stringify(lots,null,2)}
-}catch(e){alert("Invalid JSON")}}
+importBtn.onclick=()=>{try{const arr=JSON.parse(jsonBox.value);if(Array.isArray(arr)){lots=arr;saveLots();Object.values(markers).forEach(m=>m.remove());for(const l of lots)renderMarker(l);draw()}}catch(e){alert("Invalid JSON")}}
 searchEl.oninput=e=>{query=e.target.value;draw()}
 liveTab.onclick=()=>{liveTab.classList.add("active");officialTab.classList.remove("active");livePane.style.display="grid";pdfPane.style.display="none"}
 officialTab.onclick=()=>{officialTab.classList.add("active");liveTab.classList.remove("active");livePane.style.display="none";pdfPane.style.display="block"}
